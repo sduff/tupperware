@@ -15,15 +15,33 @@ services:
     image: "traefik:v2.5"
     container_name: "traefik"
     command:
-      #- "--log.level=DEBUG"
-      - "--api.insecure=true"
+      # Docker Provider
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      # Traefik Dashboard
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      # Insecure Entrypoint redirects to secure
+      # The home router blocks this anyway, but just in case
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      # Secure Entrypoint
       - "--entrypoints.websecure.address=:443"
+      # TLS
+      # Non Wildcard
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=#{ACME_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.email=#{EMAIL}"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      # Wildcard
+      #- "--entrypoints.websecure.http.tls=true"
+      #- "--entrypoints.websecure.http.tls.certResolver=letsencrypt"
+      #- "--entrypoints.websecure.http.tls.domains[0].main=${CF_ZONE}"
+      #- "--entrypoints.websecure.http.tls.domains[0].sans=*.${CF_ZONE}"
+      # Log access
+      - "--accesslog=true"
     ports:
+      - "80:80"
       - "443:443"
       - "8080:8080"
     volumes:
@@ -39,5 +57,3 @@ services:
       - "traefik.http.routers.whoami.rule=Host(`jarvis.simonduff.net`)"
       - "traefik.http.routers.whoami.entrypoints=websecure"
       - "traefik.http.routers.whoami.tls.certresolver=myresolver"
-
-
