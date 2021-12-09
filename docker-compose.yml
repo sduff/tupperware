@@ -21,19 +21,9 @@ services:
       # Traefik Dashboard
       - "--api.dashboard=true"
       - "--api.insecure=true"
-      # Insecure Entrypoint redirects to secure
-      # The home router blocks this anyway, but just in case
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       # Secure Entrypoint
       - "--entrypoints.websecure.address=:443"
-      # TLS
-      # Non Wildcard
-      # - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      # - "--certificatesresolvers.myresolver.acme.email=${EMAIL}"
-      # - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      # Wildcard
+      # TLS - Wildcard
       - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare"
       - "--certificatesresolvers.letsencrypt.acme.email=${EMAIL}"
@@ -65,13 +55,20 @@ services:
       - "traefik.http.routers.whoami.tls=true"
       - "traefik.http.routers.whoami.tls.certresolver=letsencrypt"
 
-  # Test Service
-  whoami2:
-    image: "traefik/whoami"
-    container_name: "simple-service2"
+  # BusyBox, just for testing
+  bb:
+    image: "busybox"
+    container_name: "busybox"
+    tty: true
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.whoami2.rule=Host(`who.simonduff.net`)"
-      - "traefik.http.routers.whoami2.entrypoints=websecure"
-      - "traefik.http.routers.whoami2.tls=true"
-      - "traefik.http.routers.whoami2.tls.certresolver=letsencrypt"
+      - "traefik.enable=false"
+
+  # MQTT Broker
+  mqtt:
+    image: "hivemq/hivemq4"
+    container_name: "mqtt-broker"
+    labels:
+      - "traefik.enable=false"
+    ports:
+      - "1883:1883"
+      - "8883:8080"
